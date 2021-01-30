@@ -1,0 +1,1 @@
+<div> hola {{$brai}}</div>
