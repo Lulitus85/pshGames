@@ -21,3 +21,4 @@ Route::get('/', function () {
 
 
 Route::get('/home','ResultController@insertData');
+Route::get('/update', 'ResultController@viewUpdate');

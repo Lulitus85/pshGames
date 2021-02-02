@@ -5,61 +5,90 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
-Use App\Models\Player;
+use App\Models\Player;
+use App\Models\Game;
+use App\Models\Result;
 use Illuminate\Support\Facades\DB;
 
 class ResultController extends Controller
 {
     public function insertData(Client $client){
-        
-        
 
-   
-/*         $player = array(
-            'nick_name'=>'Lulitus',
-            'photo'=>'Untitled-1-01.png',
-            'created_at'=>date('Y-m-d H:i:s'),
-            'updated_at'=>date('Y-m-d H:i:s')
-        );
+        $loop=8;
+        //insert data into tables.
+        for($i=0; $i<$loop; $i++){
+                //insert player
+                $var = rand(0,10);      
+                if($var > 0){
+                    for ($i = 0; $i < $var; $i++){
+                        $response = Http::get('https://randomuser.me/api');
+                        $data = json_decode($response->getBody());
+                        if($data){
+                            $data = $data->results;
+                            $player = array(
+                                'nick_name'=>$data[0]->name->first,
+                                'photo'=>$data[0]->picture->large
+                            );
+                            $newplayer = new Player($player);
+                            $newplayer->save();
+                        }
+                    }
+                }
+                //
 
-        $user = new Player($player);
-        $user->save(); */
+                //insert game
+                $name=substr(str_shuffle("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 15);
 
-        
+                $game=array(
+                    'name'=>$name,
+                    'created_at'=>date('Y-m-d H:i:s'),
+                    'updated_at'=>date('Y-m-d H:i:s')
+                );
 
-        //insert data a las 3 tablas.
+                DB::table('games')->insert($game);
+                
+                $players=DB::table('players')->latest()->take($var)->get();
+                $games=DB::table('games')->latest()->take(1)->get();
 
-       /*  $response = Http::get('https://randomuser.me/api');
-        dd($response); */
-
-/*        $response=$client->request('GET',"");
-       dd($response); */
+                //insert statistics
+                if($var>0){
+                    for($i=0; $i<count($players);$i++){
+                        $score=rand(1,100);
+                        $result = array(
+                            'id_player'=>$players[$i]->id,
+                            'id_game'=>$games[0]->id,
+                            'score'=>$score,
+                            'created_at'=>date('Y-m-d H:i:s'),
+                            'updated_at'=>date('Y-m-d H:i:s')
+                        );
+                        $newresult = new Result($result);
+                        $newresult->save();
+                    }
+                }
+                $results=DB::table('results')->latest()->take($var)->get();
+        }
        
-        /* $client=new Client([
-            'base_uri' => 'https://randomuser.me',
-            'timeout'=>2.0,
-        ]);
+        //TOP 10 BEST SCOREs           
+        $players=DB::table('players')->get()->all();
+        $games=DB::table('games')->get()->all();
+        $results=DB::table('results')->orderBy('score','DESC')->take(10)->get();
 
-        $response = $client->request('GET','api');
-
-        dd($response);
-
-        $response = $client->request('GET','api');
-        $data = json_decode($response->getBody());
-        dd($data); */
-/* 
-        $players=DB::table('players')->get(); */
-
-
-        $client = new Client;
-          
-        $response = $client->get('https://randomuser.me/api');
-
-        // You need to parse the response body
-        // This will parse it into an array
-        $response = json_decode($response->getBody(), true);
-        dd($response);
-
-        return view('home')->with('players',$players);
+        //está trayendo los ultimos insertados... revisar
+        return view('home')->with('players',$players)
+                           ->with('games',$games)
+                           ->with('results',$results);
     }
+
+    //update view every 10 seconds
+    public function viewUpdate(){
+    
+        $players=DB::table('players')->get()->all();
+        $games=DB::table('games')->get()->all();
+        $results=DB::table('results')->orderBy('score','DESC')->take(10)->get();
+
+        return view('newStatistic')->with('results', $results)
+                                   ->with('games',$games)
+                                   ->with('players', $players);
+    }
+
 }
