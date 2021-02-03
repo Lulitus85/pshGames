@@ -3,6 +3,7 @@
 namespace App\Console;
 
 use App\Console\Commands\UpdateScores;
+use App\Console\Commands\InsertData;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
@@ -14,7 +15,8 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        UpdateScores::class
+        UpdateScores::class,
+        InsertData::class
     ];
 
     /**
@@ -25,7 +27,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('scores:update')->everyMinute();
+        $schedule->command('scores:update')->everyFiveMinutes();
+        $schedule->command('data:insert');
     }
 
     /**

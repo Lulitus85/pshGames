@@ -14,11 +14,12 @@ use GuzzleHttp\Client;
 | contains the "web" middleware group. Now create something great!
 |
 */
- 
+/*  
 Route::get('/', function () {
     return view('welcome');
-}); 
+});  */
 
 
-Route::get('/home','ResultController@insertData');
+Route::get('/','ResultController@getData');
 Route::get('/update', 'ResultController@viewUpdate');
+Route::get('/export', 'ResultController@getReport');

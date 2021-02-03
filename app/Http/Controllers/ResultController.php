@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\DB;
 
 class ResultController extends Controller
 {
-    public function insertData(Client $client){
+    public function getData(Client $client){
 
-        $loop=8;
+        $loop=10;
         //insert data into tables.
         for($i=0; $i<$loop; $i++){
                 //insert player
@@ -73,10 +73,25 @@ class ResultController extends Controller
         $games=DB::table('games')->get()->all();
         $results=DB::table('results')->orderBy('score','DESC')->take(10)->get();
 
-        //está trayendo los ultimos insertados... revisar
-        return view('home')->with('players',$players)
-                           ->with('games',$games)
-                           ->with('results',$results);
+       
+        $post=[];
+        $scores=[];
+        for($i=0; $i<count($results); $i++){
+            for($j=0; $j<count($players); $j++){
+                if($results[$i]->id_player === $players[$j]->id){
+                    $post = array(
+                        'id'=>$results[$i]->id,
+                        'score'=>$results[$i]->score,
+                        'player_name'=>$players[$j]->nick_name,
+                        'photo'=>$players[$j]->photo,
+                        'updated'=>$results[$i]->updated_at
+                    );
+                }
+            }
+            array_push($scores,$post);
+        }
+   
+        return view('home')->with('scores',$scores);
     }
 
     //update view every 10 seconds
@@ -86,9 +101,74 @@ class ResultController extends Controller
         $games=DB::table('games')->get()->all();
         $results=DB::table('results')->orderBy('score','DESC')->take(10)->get();
 
-        return view('newStatistic')->with('results', $results)
-                                   ->with('games',$games)
-                                   ->with('players', $players);
+        $post=[];
+        $scores=[];
+        for($i=0; $i<count($results); $i++){
+            for($j=0; $j<count($players); $j++){
+                if($results[$i]->id_player === $players[$j]->id){
+                    $post = array(
+                        'id'=>$results[$i]->id,
+                        'score'=>$results[$i]->score,
+                        'player_name'=>$players[$j]->nick_name,
+                        'photo'=>$players[$j]->photo,
+                        'updated'=>$results[$i]->updated_at
+                    );
+                }
+            }
+            array_push($scores,$post);
+        }
+
+        return view('newStatistic')->with('scores', $scores);
+    }
+
+    public function getReport(Request $request){
+        $fileName = 'scores.csv';
+        $players=DB::table('players')->get()->all();
+        $games=DB::table('games')->get()->all();
+        $results=DB::table('results')->orderBy('score','DESC')->take(10)->get();
+
+        $post=[];
+        $scores=[];
+        for($i=0; $i<count($results); $i++){
+            for($j=0; $j<count($players); $j++){
+                if($results[$i]->id_player === $players[$j]->id){
+                    $post = array(
+                        'id'=>$results[$i]->id,
+                        'score'=>$results[$i]->score,
+                        'player_name'=>$players[$j]->nick_name,
+                        'photo'=>$players[$j]->photo,
+                        'updated'=>$results[$i]->updated_at
+                    );
+                }
+            }
+            array_push($scores,$post);
+        } 
+
+        $headers=array(
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        );
+
+        $columns = array('Id Player', 'Player', 'Score', 'Last Update');
+
+        $callback = function() use($scores, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            foreach ($scores as $score) {
+                $row['Id Player']  = $score['id'];
+                $row['Player']    = $score['player_name'];
+                $row['Score']    = $score['score'];
+                $row['Last Update']  = $score['updated'];
+
+                fputcsv($file, array($row['Id Player'], $row['Player'], $row['Score'], $row['Last Update']));
+            }
+
+            fclose($file);
+        };
+        return response()->stream($callback, 200, $headers);
     }
 
 }
