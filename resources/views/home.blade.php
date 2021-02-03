@@ -111,7 +111,7 @@ div>span:hover{
 <script>
 
 updateStatistics();
-window.setTimeout(updateStatistics,5000);
+window.setTimeout(updateStatistics,10000);
 
 function updateStatistics(){
     $.ajax({
